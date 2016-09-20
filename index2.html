@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="bearFacts">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bear Facts and Quiz</title>
+    <!-- Bootstrap css and my own css -->
+    <link rel="stylesheet" 
+        href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" 
+        integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" 
+        crossorigin="anonymous">
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+   
+    <div class="container">
+        <div class="page-header">
+            <h1>Bear Facts Quiz</h1>
+            <h3>
+                Learn about all the bears below before you decide to take on the 
+                <strong>BEAR QUIZ</strong>
+            </h3>
+        </div>
+		<div ng-controller="listCtrl as list" ng-hide="list.quizMetrics.quizActive || list.quizMetrics.resultsActive">
+			<!--using bootstrap creating search bar with start button on top-right-->
+			<form class="form-inline well well-sm clearfix">
+				<span class="glyphicon glyphicon-search"></span>
+				<input 
+					   type="text" 
+					   placeholder="search..." 
+					   class="form-control"
+					   ng-model="list.search">
+				<button class="btn btn-warning pull-right"
+						ng-click="list.activateQuiz()">
+					<!--if we click start button it will active quiz questions in list controller to true and dispay quiz questions-->
+				         <strong>Start Quiz</strong>
+				</button>
+			</form>
+			<!--row to contain list of turtles and ng-repeat directive makes a copy of each item in list-->
+			<div class="row">
+				<div class="col-sm-6" ng-repeat="bear in list.data | filter:list.search">
+					<!--well is a bootstrap which gives you grey colour box with 3 different sizes by default it is medium size-->
+					<div class="well well-sm">
+						<div class="row">
+							<div class="col-md-6">
+								<!-- using ng-src instead of src will implement angular logic and html neglects it-->
+							<img ng-src="{{bear.image_url}}" class="img-rounded img-responsive well-image">
+							</div>
+							<div class="col-md-6">
+								<h4>{{bear.type}}</h4>
+								<p><strong>Locations:</strong>{{bear.locations}}</p>
+								<p><strong>Size:</strong>{{bear.size}}</p>
+								<p><strong>Average Lifespan:</strong>{{bear.lifespan}}</p>
+								<p><strong>Diet:</strong>{{bear.diet}}</p>
+								<button class="btn btn-primary pull-right"
+										data-toggle="modal"
+										data-target="#bear-info"
+										ng-click="list.changeActiveBear(bear)">learn more</button>
+								<!-- data-toggle and data-target bootstrap attributes to create popup modal and ng-click is used to trigger an event-->
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="modal" id="bear-info">
+				<div class="modal-dialog">
+					<div class="modal-content">
+						<div class="modal-header">
+							<!--modal-header and modal-content to create heading inside popup modal-->
+							<h2>{{list.activeBear.type}}</h2>
+						</div>
+						<div class="modal-body">
+							<div class="row">
+								<div class="col-xs-8 col-xs-offset-2">
+									<img ng-src="{{list.activeBear.image_url}}" class="img-rounded img-responsive">
+									<!--col-offset moves image two columns left and right from margin to move image to centre-->
+								</div>
+							</div>
+							<div class="row top-buffer">
+								<!--top-buffer class arrange content in organized way.-->
+								<div class="col-md-6">
+									<p><strong>Locations:</strong>{{list.activeBear.locations}}</p>
+									<p><strong>Size:</strong>{{list.activeBear.size}}</p>
+									<p><strong>Average Lifespan:</strong>{{list.activeBear.lifespan}}</p>
+									<p><strong>Diet:</strong>{{list.activeBear.diet}}</p>
+								</div>
+								<div class="col-xs-12 top-buffer">
+									<p>{{list.activeBear.description}}</p>
+									<button class="btn btn-danger pull-right" 
+											data-dismiss="modal">Close</button>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		 </div>
+		<div ng-controller="quizCtrl as quiz" ng-show="quiz.quizMetrics.quizActive">
+			<div class="row">
+				<div class="col-xs-8">
+					<h2>Progress:</h2>
+					<div class="btn-toolbar">
+						<button class="btn"
+								ng-repeat="question in quiz.dataService.quizQuestions"
+								ng-class="{'btn-info': question.selected !== null, 'btn-danger':question.selected === null}"
+								ng-click="quiz.setActiveQuestion($index)">
+							<span class="glyphicon"
+								  ng-class="{'glyphicon-pencil': question.selected !== null, 'glyphicon-question-sign': question.selected ===null}"></span>
+							<!--$index argument is a angular variable which set to current question-->
+						</button>
+					</div>
+				</div>
+				<div class="col-xs-4">
+					<div class="row">
+						<h4>Legend:</h4>
+						<div class="col-sm-4">
+							<button class="btn btn-info">
+								<!--button btn-info is a bootstrap class which gives you blue background to button -->
+								<span class="glyphicon glyphicon-pencil"></span>
+							</button>
+							<p>Answered</p>
+						</div>
+						<div class="col-xs-4">
+							<button class="btn btn-danger">
+								<span class="glyphicon glyphicon-question-sign"></span>
+							</button>
+							<p>Unanswered</p>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="alert alert-danger"
+					 ng-show="quiz.error">
+					Error!you have not answered all questions
+					<button class="close" ng-click="quiz.error = false">&times</button>
+				</div>
+				<h3>Question:</h3>
+				<div class="well well-sm" ng-hide="quiz.finalise">
+					<!--ng-hide will execute conditionally if all questions are answered then it will execute otherwise it will show error msg that all questions are not answered -->
+					<div class="row">
+						<div class="col-xs-12">
+							<h4>{{quiz.activeQuestion+1 + ". " + quiz.dataService.quizQuestions[quiz.activeQuestion].text}}</h4>
+							<div class="row"
+								 ng-if="quiz.dataService.quizQuestions[quiz.activeQuestion].type === 'text'">
+								<div class="col-sm-6" ng-repeat="answer in 
+							quiz.dataService.quizQuestions[quiz.activeQuestion].possibilities">
+									<h4 class="answer"
+										ng-class="{'bg-info':$index === quiz.dataService.quizQuestions[quiz.activeQuestion].selected}"
+										ng-click="quiz.selectAnswer($index)">
+										{{answer.answer}}</h4>
+								</div>
+							</div>
+							<div class="row"
+								 ng-if="quiz.dataService.quizQuestions[quiz.activeQuestion].type ==='image'">
+								<div class="col-sm-6" ng-repeat="answer in
+							quiz.dataService.quizQuestions[quiz.activeQuestion].possibilities">
+									<div class="image-answer"
+										 ng-class="{'image-selected':$index === quiz.dataService.quizQuestions[quiz.activeQuestion].selected}"
+										 ng-click="quiz.selectAnswer($index)">
+										<img ng-src="{{answer.answer}}">
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<button class="btn btn-warning" ng-click="quiz.questionAnswered()">Continue</button>
+				</div>
+				
+				<div class="well well-sm" ng-show="quiz.finalise">
+					<div class="row">
+						<div class="col-xs-12">
+							<h3>Are you sure you want to submit your answers?</h3>
+							<!--it will give you prompt before submitting the answers-->
+							<button class="btn btn-success" ng-click="quiz.finaliseAnswers()">Yes</button>
+							<button class="btn btn-danger" ng-click="quiz.finalise = false">No</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			</div>
+			<div ng-controller="resultsCtrl as results" ng-show="results.quizMetrics.resultsActive">
+				<div class="row">
+					<div class="col-xs-8">
+						<h2>Results:</h2>
+						<div class="btn-toolbar">
+							<!--combines set of button groups-->
+							<button class="btn" ng-repeat="question in results.dataService.quizQuestions" ng-class="{'btn-success': question.correct, 'btn-danger': !question.correct}"
+									ng-click="results.setActiveQuestion($index)">
+								<span class="glyphicon"
+									  ng-class="{'glyphicon-ok':question.correct, 'glyphicon-remove': !question.correct}">
+								</span>
+							</button>
+						
+						
+						</div>
+					
+					
+					</div>
+					<div class="col-xs-4">
+					<div class="row">
+						<h4>Legend:</h4>
+						<div class="col-sm-4">
+							<button class="btn btn-sucess">
+								<span class="glyphicon glyphicon-ok"></span>
+								<!-- glyphicon-ok bootstrap class gives you correct symbol on button -->
+							</button>
+							<p>Correct</p>
+						</div>
+						<div class="col-sm-4">
+							<button class="btn btn-danger">
+								<span class="glyphicon glyphicon-remove"></span>
+							</button>
+							<p>Incorrect:</p>
+						</div>
+					</div>  
+				</div>
+		      </div>
+				<div class="row">
+					<div class="col-xs-12 top-buffer">
+						<h2>You scored {{results.quizMetrics.numCorrect}} / {{results.dataService.quizQuestions.length}}</h2>
+						<h2><strong>{{results.calculatePerc() | number:2}}%</strong></h2>
+						<!--the logic for percentage is number of correct answers by total number of question multiplied by 100.and we add filter property called number to calculated accurate results by decimal places. In angular filters will provide easy methods to find particular things like with the help of key words we can find results. -->
+					</div>
+				</div>
+				
+				
+				
+				<div class="row">
+					<h3>Questions:</h3>
+					<div class="well well-sm">
+						<div class="row">
+							<div class="col-xs-12">
+								<!-- col-xs-12 means the row takes total avaiable 12 col and +1+"." is added to give question number in the beggining of question-->
+								<h4>{{results.activeQuestion+1 +". "+results.dataService.quizQuestions[results.activeQuestion].text}}</h4>
+								<div class="row"
+				                   ng-if="results.dataService.quizQuestions[results.activeQuestion].type === 'text'">
+									<div class="col-sm-6" ng-repeat="answer in results.dataService.quizQuestions[results.activeQuestion].possibilities">
+										<h4 class="answer"
+											ng-class="results.getAnswerClass($index)">
+											<!-- here we used a ng-class in different way by creating function and inside we give if the index of selected answer by user not equal to correct answer index then it will show red background meaning index of your answer is not matched with index of correct answer and the answer is equal to one of the possibilities-->
+											{{answer.answer}}
+											<p class="pull-right"
+											   ng-show="$index !==results.quizMetrics.correctAnswers[results.activeQuestion] && $index === results.dataService.quizQuestions[results.activeQuestion].selected">Your Answer</p>
+											
+											<p class="pull-right"
+											   ng-show="$index === results.quizMetrics.correctAnswers[results.activeQuestion]">Correct Answer</p>
+										</h4>
+									</div>
+								</div>
+								<div class="row"
+									 ng-if="results.dataService.quizQuestions[results.activeQuestion].type === 'image'">
+									<!--if the answer is of image type we give type === image and if it is of text we will give text type-->
+									<div class="col-sm-6" ng-repeat="answer in results.dataService.quizQuestions[results.activeQuestion].possibilities">
+										<!-- it will loop through all possibilities with the help of ng-repeat -->
+										<div class="image-answer"
+											 ng-class="results.getAnswerClass($index)">
+											<img ng-src="{{answer.answer}}">
+										</div>
+									</div>	
+							   </div>
+							</div>
+						</div>
+					</div>
+					<button class="btn btn-primary btn-lg" ng-click="results.reset()">Go back to Facts</button>
+		
+				</div>
+			</div>
+    </div>
+              <!--once we complete our quiz we should be able to go back to facts and reset it again so, we use ng-click-->
+    <!-- third party js -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.0-rc.2/angular.min.js"></script>
+    <script src="https://code.jquery.com/jquery-2.2.0.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+ 
+    <!-- Our application scripts that are executed -->
+	<script src="app1.js"></script>
+	<script src="list1.js"></script>
+	<script src="quiz1.js"></script>
+	<script src="results1.js"></script>
+	<script src="quizMetrics1.js"></script>
+	<script src="dataservice1.js"></script>
+	
+	
+</body>
+</html>
